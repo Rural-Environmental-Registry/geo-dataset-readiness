@@ -1,0 +1,170 @@
+{
+  "name": "SICAR Environmental Dataset",
+  "description": "Reference layout for validation of SICAR environmental datasets",
+  "version": "1.0.0",
+  "crs": {
+    "epsg": 4674,
+    "name": "SIRGAS 2000 Geographic (EPSG:4674)"
+  },
+  "accepted_formats": [".gpkg", ".gdb", ".zip"],
+  "layers": [
+    {
+      "name": "AREA_ANTROPIZADA",
+      "geometry": "MultiPolygon",
+      "fields": [],
+      "forbidden_fields": ["CLASSE"],
+      "absence_status": "NON_CONFORMANT"
+    },
+    {
+      "name": "AREA_CONSOLIDADA",
+      "geometry": "MultiPolygon",
+      "fields": [],
+      "forbidden_fields": ["CLASSE"],
+      "absence_status": "NON_CONFORMANT"
+    },
+    {
+      "name": "HIDROGRAFIA",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 8},
+          "subclasses": [
+            {"value": 1, "description": "RIO_ATE_10"},
+            {"value": 2, "description": "RIO_10_A_50"},
+            {"value": 3, "description": "RIO_50_A_200"},
+            {"value": 4, "description": "RIO_200_A_600"},
+            {"value": 5, "description": "RIO_ACIMA_600"},
+            {"value": 6, "description": "LAGO_NATURAL"},
+            {"value": 7, "description": "RESERVATORIO_ARTIFICIAL"},
+            {"value": 8, "description": "NASCENTE"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "NON_CONFORMANT"
+    },
+    {
+      "name": "APP",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 8},
+          "subclasses": [
+            {"value": 1, "description": "APP_RIO_ATE_10"},
+            {"value": 2, "description": "APP_RIO_10_A_50"},
+            {"value": 3, "description": "APP_RIO_50_A_200"},
+            {"value": 4, "description": "APP_RIO_200_A_600"},
+            {"value": 5, "description": "APP_RIO_ACIMA_600"},
+            {"value": 6, "description": "APP_LAGO_NATURAL"},
+            {"value": 7, "description": "APP_RESERVATORIO_ARTIFICIAL"},
+            {"value": 8, "description": "APP_NASCENTE"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "WARNING"
+    },
+    {
+      "name": "VEGETACAO_ATUAL",
+      "geometry": "MultiPolygon",
+      "fields": [],
+      "forbidden_fields": ["CLASSE"],
+      "absence_status": "NON_CONFORMANT"
+    },
+    {
+      "name": "VEGETACAO_2008",
+      "geometry": "MultiPolygon",
+      "fields": [],
+      "forbidden_fields": ["CLASSE"],
+      "absence_status": "NON_CONFORMANT"
+    },
+    {
+      "name": "SERVIDAO",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 4},
+          "subclasses": [
+            {"value": 1, "description": "INFRAESTRUTURA_PUBLICA"},
+            {"value": 2, "description": "UTILIDADE_PUBLICA"},
+            {"value": 3, "description": "RESERVATORIO_ABASTECIMENTO_GERACAO_ENERGIA"},
+            {"value": 4, "description": "ENTORNO_RESERVATORIO_ABASTECIMENTO_GERACAO_ENERGIA"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "WARNING"
+    },
+    {
+      "name": "RELEVO",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 8},
+          "subclasses": [
+            {"value": 1, "description": "ALTITUDE_SUPERIOR_1800"},
+            {"value": 2, "description": "BORDA_CHAPADA"},
+            {"value": 3, "description": "DECLIVIDADE_MAIOR_45"},
+            {"value": 4, "description": "TOPO_MORRO"},
+            {"value": 5, "description": "APP_ALTITUDE_SUPERIOR_1800"},
+            {"value": 6, "description": "APP_BORDA_CHAPADA"},
+            {"value": 7, "description": "APP_DECLIVIDADE_MAIOR_45"},
+            {"value": 8, "description": "APP_TOPO_MORRO"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "WARNING"
+    },
+    {
+      "name": "USO_RESTRITO",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 2},
+          "subclasses": [
+            {"value": 1, "description": "DECLIVIDADE_25_A_45"},
+            {"value": 2, "description": "PANTANEIRA"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "WARNING"
+    },
+    {
+      "name": "APP_ESPECIAL",
+      "geometry": "MultiPolygon",
+      "fields": [
+        {
+          "name": "CLASSE",
+          "type": "numeric",
+          "domain": {"min": 1, "max": 10},
+          "subclasses": [
+            {"value": 1, "description": "RESERVATORIO_ENERGIA_24082001"},
+            {"value": 2, "description": "VEGETACAO_RESTINGA"},
+            {"value": 3, "description": "VEGETACAO_VEREDA"},
+            {"value": 4, "description": "VEGETACAO_BANHADO"},
+            {"value": 5, "description": "VEGETACAO_MANGUEZAL"},
+            {"value": 6, "description": "APP_RESERVATORIO_ENERGIA_24082001"},
+            {"value": 7, "description": "APP_RESTINGA"},
+            {"value": 8, "description": "APP_VEREDA"},
+            {"value": 9, "description": "APP_BANHADO"},
+            {"value": 10, "description": "APP_MANGUEZAL"}
+          ]
+        }
+      ],
+      "forbidden_fields": [],
+      "absence_status": "WARNING"
+    }
+  ]
+}

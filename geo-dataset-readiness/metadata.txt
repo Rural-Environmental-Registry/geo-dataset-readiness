@@ -1,0 +1,18 @@
+[general]
+name=SICAR AD - Validate Environmental Dataset Structure
+qgisMinimumVersion=3.22
+qgisMaximumVersion=4.99
+description=Logical consistency validation of environmental dataset structure according to ISO 19157:2013 — GOV.BR DS Interface
+version=0.0.1
+author=Dataprev
+email=sicar@dataprev.gov.br
+about=Plugin for logical consistency validation (ISO 19157:2013) of environmental dataset structure. Version with interface redesigned according to the Digital Government Standard (GOV.BR DS). Checks format, conceptual, domain and topological consistency in GeoPackage (.gpkg) or ESRI GeoDatabase (.gdb).
+tracker=https://github.com/dataprev/qgis-plugin-validador/issues
+repository=https://github.com/dataprev/qgis-plugin-validador
+tags=validation,iso19157,quality,geopackage,geodatabase,consistency,sicar,environmental,govbr
+homepage=https://github.com/dataprev/qgis-plugin-validador
+category=Analysis
+icon=icon.ico
+experimental=True
+deprecated=False
+license=GPLv3
