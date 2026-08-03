@@ -1,0 +1,178 @@
+{
+  "_meta": {
+    "locale": "en_US",
+    "language": "English (United States)",
+    "flag": "🌐 EN",
+    "version": "1.0.0"
+  },
+
+  "ui": {
+    "window_title":        "SICAR AD — Validate Environmental Dataset Structure",
+    "header_title":        "SICAR AD — Validate Environmental Dataset Structure",
+    "header_subtitle":     "ISO 19157:2013 · Geographic Data Quality · Logical Consistency",
+
+    "tab_source":          "Select Dataset",
+    "tab_rules":           "Rules",
+    "tab_results":         "Results",
+    "tab_log":             "Log",
+
+    "file_hint":           "Select the GeoPackage (.gpkg) file or GeoDatabase (.gdb) directory of the environmental dataset to be validated.",
+    "btn_select_gpkg":     "Select .GPKG",
+    "btn_select_gdb":      "Select .GDB",
+    "file_placeholder":    "No file selected...",
+    "chk_layer_filter":    "Validate Layer",
+    "chk_detailed":        "Detailed Validation",
+    "lbl_error_limit":     "Max errors to list",
+    "txt_error_limit_ph":  "e.g.: 10",
+    "btn_validate":        "▶  Validate Dataset",
+
+    "dlg_select_gpkg":     "Select GeoPackage",
+    "dlg_gpkg_filter":     "GeoPackage (*.gpkg *.gpkg.zip *.zip);;All (*)",
+    "dlg_select_gdb":      "Select .gdb folder",
+    "err_invalid_format":  "Invalid format",
+    "err_invalid_format_msg": "The selected folder does not end with .gdb.",
+    "err_no_layer":        "No layer selected",
+    "err_no_layer_msg":    "Select a layer to run the validation.",
+    "warn_detailed":       "Detailed Validation",
+    "warn_detailed_msg":   "Detailed Validation can only be run on a single layer.",
+    "warn_no_limit":       "Error limit not defined",
+    "warn_no_limit_msg":   "Error count limit not defined. Processing may be extremely slow.",
+    "err_validation":      "Error",
+    "err_validation_msg":  "Validation error:\n{e}",
+    "warn_export":         "Warning",
+    "warn_export_msg":     "Run the validation before exporting.",
+    "dlg_save_pdf":        "Save PDF Report",
+    "dlg_pdf_filter":      "PDF (*.pdf);;All (*)",
+    "err_pdf":             "Error",
+    "err_pdf_msg":         "Error generating PDF:\n{e}",
+
+    "log_completed":       "[COMPLETED]",
+    "log_total_time":      "Total time: {t:.1f}s",
+
+    "subtab_format":       "Format",
+    "subtab_conceptual":   "Conceptual",
+    "subtab_domain":       "Domain",
+    "subtab_topological":  "Topological",
+    "subtab_topo_detail":  "Topological (Detailed)",
+    "section_consistencies": "Consistencies",
+
+    "col_check":           "Check",
+    "col_status":          "Status",
+    "col_details":         "Details",
+    "col_layer":           "Layer",
+    "col_wkt":             "WKT",
+    "col_rule":            "Rule",
+    "col_description":     "Description",
+    "col_class":           "Class",
+
+    "lbl_source":          "Source",
+    "lbl_layers":          "Layers found in dataset",
+    "lbl_non_conf":        "Non-conformant items",
+    "lbl_and_more":        "...and {n} more items",
+
+    "status_conf":         "CONFORMANT",
+    "status_warn":         "CONFORMANT WITH WARNINGS",
+    "status_nonconf":      "NON-CONFORMANT",
+
+    "cat_format":          "Format Consistency",
+    "cat_conceptual":      "Conceptual Consistency",
+    "cat_domain":          "Domain Consistency",
+    "cat_topological":     "Topological Consistency",
+
+    "st_conformant":       "✓ Conformant",
+    "st_warning":          "⚠ Warning",
+    "st_nonconf":          "✗ Non-conformant",
+
+    "btn_export_pdf":      "Export PDF",
+
+    "rules_title":         "ISO 19157:2013 — Geographic Data Quality",
+    "rules_intro":         "The ISO 19157 / 2013 standard defines quality elements for evaluating geographic data. This validator applies <b>Logical Consistency</b> checks (section 7.3.3 of the standard) that assess whether the state dataset structure meets the minimum criteria to integrate the SICAR AD environmental dataset.",
+    "rules_info_title":    "ℹ Layout configuration",
+    "rules_info_body":     "The environmental dataset structure (expected layers, required fields, class intervals and coordinate system) is defined in the <b>geodb-layout.json</b> file located in the plugin directory. To change the environmental dataset structure, edit this file.",
+    "rules_ref_intro":     "The validator also follows the guidelines of the Technical Note",
+    "sec_format":          "1. Format Consistency",
+    "sec_conceptual":      "2. Conceptual Consistency",
+    "sec_domain":          "3. Domain Consistency",
+    "sec_topological":     "4. Topological Consistency",
+    "sec_subclass":        "Layer Subclassification (CLASSE attribute)",
+
+    "diag_title":          "═══ Environment Diagnostics ═══",
+    "diag_sep":            "═══════════════════════════════",
+    "diag_input":          "▸ Input",
+    "diag_file":           "File",
+    "diag_dir":            "Directory",
+    "diag_path":           "Path",
+    "diag_software":       "▸ Software",
+    "diag_libs":           "Libraries",
+    "diag_system":         "▸ System",
+    "diag_os":             "OS",
+    "diag_encoding":       "Encoding",
+    "diag_hardware":       "▸ Hardware",
+    "diag_cpu":            "CPU",
+    "diag_cores":          "cores",
+    "diag_ram":            "RAM",
+    "diag_total":          "total",
+    "diag_available":      "available",
+    "diag_in_use":         "in use",
+    "diag_na":             "N/A",
+
+    "pdf_footer":          "Brazilian Forest Service — SFB &nbsp;|&nbsp; National Rural Environmental Registry — SICAR<br>Report automatically generated by SICAR AD plugin — Validate Environmental Dataset Structure<br>Digital Government Standard · gov.br",
+    "pdf_val_date":        "Validation date",
+    "pdf_source":          "Source",
+    "pdf_val_result":      "Validation result",
+    "pdf_summary_lbl":     "Summary",
+    "pdf_sum_by_cat":      "Summary by Category",
+    "pdf_layers":          "Layers found in dataset",
+    "pdf_non_conf":        "Non-conformant items",
+    "pdf_warnings":        "Warning items",
+    "pdf_category":        "Category",
+    "pdf_status":          "Status",
+    "pdf_result":          "Result",
+    "pdf_conformant_of":   "conformant"
+  },
+
+  "engine": {
+    "status": {
+      "CONFORMANT":     "CONFORMANT",
+      "NON-CONFORMANT": "NON-CONFORMANT",
+      "WARNING":        "WARNING"
+    },
+
+    "check_names": {},
+
+    "summary": {
+      "rules_executed":  "{total} rules executed ({ok} conformant",
+      "non_conformant":  ", {n} non-conformant",
+      "warnings":        ", {n} warning(s)",
+      "close":           ")"
+    },
+
+    "detail_exact": {},
+
+    "detail_patterns": [],
+
+    "progress": {
+      "extracting_zip":           "Extracting GPKG from ZIP archive...",
+      "gpkg_extracted":           "GPKG extracted: {name}",
+      "checking_format":          "Checking format...",
+      "format_checked":           "Format checked ({n} checks)",
+      "completed_invalid_format": "Completed (invalid format)",
+      "checking_conceptual":      "Checking conceptual consistency...",
+      "conceptual_checked":       "Conceptual consistency checked",
+      "checking_domain":          "Checking domain consistency...",
+      "domain_checked":           "Domain consistency checked",
+      "checking_topological":     "Checking topological consistency...",
+      "validation_complete":      "Validation complete",
+      "topo_layer":               "Topological consistency: layer {idx}/{total} — {name}",
+      "topo_processing":          "Topological consistency: {name} — processing {start}/{total} records...",
+      "topo_error_detected":      "Topological consistency: {name} — topological error detected, stopping check",
+      "topo_checked":             "Topological consistency: {name} — {end}/{total} records checked",
+      "topo_completed":           "Topological consistency: {name} — completed in {elapsed:.1f}s",
+      "topo_detail_start":        "Detailed topological consistency: {name}",
+      "topo_detail_processing":   "Detailed topological consistency: {name} — processing {start}/{total} records...",
+      "topo_detail_limit":        "Detailed topological consistency: {name} — limit of {limit} error(s) reached, stopping",
+      "topo_detail_checked":      "Detailed topological consistency: {name} — {end}/{total} records checked",
+      "topo_detail_completed":    "Detailed topological consistency: {name} — completed in {elapsed:.1f}s"
+    }
+  }
+}

@@ -21,8 +21,8 @@ PLUGIN_DIR = PROJECT_ROOT / "geo-dataset-readiness"
 # Plugin name inside the ZIP
 PLUGIN_ZIP_NAME = "geo-dataset-readiness"
 
-# Output directory
-OUTPUT_DIR = PROJECT_ROOT / "output"
+# Dist directory
+DIST_DIR = PROJECT_ROOT / "dist"
 
 # Extensions to include in the ZIP
 INCLUDE_EXTENSIONS = (".py", ".txt", ".png", ".svg", ".ui", ".ico", ".json", ".jpg", ".jpeg")
@@ -30,19 +30,19 @@ INCLUDE_EXTENSIONS = (".py", ".txt", ".png", ".svg", ".ui", ".ico", ".json", ".j
 
 def build_zip():
     """Generates the plugin ZIP with a timestamp in the name."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    DIST_DIR.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
     zip_name = f"geo_dataset_readiness_{timestamp}.zip"
-    zip_path = OUTPUT_DIR / zip_name
+    zip_path = DIST_DIR / zip_name
 
     # Collect plugin files (recursively to include assets/)
     files = []
     for f in PLUGIN_DIR.rglob("*"):
         if f.is_file() and f.suffix in INCLUDE_EXTENSIONS:
-            # Skip __pycache__ and output
+            # Skip __pycache__ and dist
             relative = f.relative_to(PLUGIN_DIR)
-            if "__pycache__" in str(relative) or str(relative).startswith("output"):
+            if "__pycache__" in str(relative) or str(relative).startswith("dist"):
                 continue
             files.append(f)
 
