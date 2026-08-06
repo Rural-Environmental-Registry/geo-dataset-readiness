@@ -245,7 +245,6 @@ class I18n:
         return detail
 
     def localized_summary(self, total: int, ok: int, non_conf: int, warnings: int) -> str:
-        """Build the validation summary sentence in the current locale."""
         tmpl = self._data.get("engine", {}).get("summary", {})
         if not tmpl:
             tmpl = self._fallback.get("engine", {}).get("summary", {})

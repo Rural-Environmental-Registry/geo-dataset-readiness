@@ -25,6 +25,7 @@
     "lbl_error_limit":     "Max errors to list",
     "txt_error_limit_ph":  "e.g.: 10",
     "btn_validate":        "▶  Validate Dataset",
+    "btn_cancel":          "Cancel",
 
     "dlg_select_gpkg":     "Select GeoPackage",
     "dlg_gpkg_filter":     "GeoPackage (*.gpkg *.gpkg.zip *.zip);;All (*)",
@@ -37,6 +38,8 @@
     "warn_detailed_msg":   "Detailed Validation can only be run on a single layer.",
     "warn_no_limit":       "Error limit not defined",
     "warn_no_limit_msg":   "Error count limit not defined. Processing may be extremely slow.",
+    "warn_no_geometry":    "Layer without geometry",
+    "warn_no_geometry_msg": "Layer '{layer}' has no geometry column and cannot be geometrically validated. All other checks were executed.",
     "err_validation":      "Error",
     "err_validation_msg":  "Validation error:\n{e}",
     "warn_export":         "Warning",
@@ -53,7 +56,7 @@
     "subtab_conceptual":   "Conceptual",
     "subtab_domain":       "Domain",
     "subtab_topological":  "Topological",
-    "subtab_topo_detail":  "Topological (Detailed)",
+    "subtab_topo_detail":  "Topological (Det.)",
     "section_consistencies": "Consistencies",
 
     "col_check":           "Check",

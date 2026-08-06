@@ -22,7 +22,8 @@
     "chk_detailed":        "Validação Detalhada",
     "lbl_error_limit":     "Qtde erros a listar",
     "txt_error_limit_ph":  "ex: 10",
-    "btn_validate":        "▶  Validar Base 2028",
+    "btn_validate":        "▶  Validar Base",
+    "btn_cancel":          "Cancelar",
     "dlg_select_gpkg":     "Selecionar GeoPackage",
     "dlg_gpkg_filter":     "GeoPackage (*.gpkg *.gpkg.zip *.zip);;Todos (*)",
     "dlg_select_gdb":      "Selecionar pasta .gdb",
@@ -34,6 +35,8 @@
     "warn_detailed_msg":   "Validação Detalhada só pode ser executada sobre uma única camada.",
     "warn_no_limit":       "Limite de erros não definido",
     "warn_no_limit_msg":   "Limite de qtde de erros não definido. Processamento poderá ser extremamente demorado.",
+    "warn_no_geometry":    "Camada sem geometria",
+    "warn_no_geometry_msg": "A camada '{layer}' não possui coluna de geometria e não pode ser validada geometricamente. As demais verificações foram executadas.",
     "err_validation":      "Erro",
     "err_validation_msg":  "Erro ao validar:\n{e}",
     "warn_export":         "Aviso",
@@ -48,7 +51,7 @@
     "subtab_conceptual":   "Conceitual",
     "subtab_domain":       "Domínio",
     "subtab_topological":  "Topológica",
-    "subtab_topo_detail":  "Topológica Detalhada",
+    "subtab_topo_detail":  "Topológica (Det.)",
     "section_consistencies": "Consistências",
     "col_check":           "Verificação",
     "col_status":          "Status",
@@ -144,7 +147,8 @@
       "Empty geometries":      "Geometrias vazias",
       "Topological errors":    "Erros topológicos",
       "Detailed validation":   "Validação detalhada",
-      "Layer not found":       "Camada não encontrada"
+      "Layer not found":       "Camada não encontrada",
+      "Geometry column missing": "Coluna de geometria ausente"
     },
 
     "summary": {
@@ -200,6 +204,10 @@
     "detail_patterns": [
       ["^Dataset readable, (\\d+) layer\\(s\\) found$",  "Base legível, \\1 camada(s) encontrada(s)"],
       ["^Error reading dataset: (.+)$",                  "Erro ao ler a base: \\1"],
+      ["^Dataset readable but contains no layers or is not a valid GeoPackage/GDB$",
+       "Base sem camadas presentes ou não é um GeoPackage/GDB válido"],
+      ["^Dataset readable but contains no layers$",
+       "Base sem camadas presentes"],
       ["^All layers found: (.+)$",                       "Todas as camadas encontradas: \\1"],
       ["^Layer '(.+)' not found in dataset$",            "Camada '\\1' não encontrada na base"],
       ["^Layer '(.+)' exists but has no records \\(empty\\)$", "Camada '\\1' existe mas não possui nenhum registro (vazia)"],
@@ -218,11 +226,17 @@
       ["^(\\d+)/(\\d+) null geometries$",                "\\1/\\2 geometrias nulas"],
       ["^(\\d+)/(\\d+) empty geometries$",               "\\1/\\2 geometrias vazias"],
       ["^Layer '(.+)' has records with topological errors$", "Camada '\\1' possui registros com erros topológicos"],
-      ["^(\\d+) geometry\\(ies\\) with topological errors(.*)$", "\\1 geometria(s) com erros topológicos\\2"],
+      ["^(\\d+) geometry\\(ies\\) with topological errors$",
+       "\\1 geometria(s) com erros topológicos"],
+      ["^(\\d+) geometry\\(ies\\) with topological errors \\(showing (\\d+) of max (\\d+), processing stopped early\\)$",
+       "\\1 geometria(s) com erros topológicos (exibindo \\2 de no máximo \\3, processamento encerrado antecipadamente)"],
       ["^2D geometries — type: (.*)$",                   "Geometrias bidimensionais (2D) — tipo: \\1"],
       ["^Layer '(.+)' with type '(.+)' \\(expected 2D without Z/M\\)$", "Camada '\\1' com tipo '\\2' (esperado 2D sem Z/M)"],
       ["^Error validating geometry: (.+)$",              "Erro ao validar geometria: \\1"],
-      ["^File not found: (.+)$",                         "Arquivo não encontrado: \\1"]
+      ["^File not found: (.+)$",                         "Arquivo não encontrado: \\1"],
+      ["^Layer '(.+)' has no geometry column$",          "Camada '\\1' não possui coluna de geometria"],
+      ["^Layer '(.+)' uses EPSG:(\\d+) \\((.+)\\)\\. Accepted, but the expected CRS is EPSG:(\\d+) \\((.+)\\)$",
+       "Camada '\\1' utiliza EPSG:\\2 (\\3). Sistema aceito, mas o esperado é EPSG:\\4 (\\5)"]
     ]
   }
 }

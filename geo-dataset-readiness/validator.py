@@ -84,10 +84,16 @@ class ValidationReport:
         return [c for c in self.checks if c.category == "topological"]
 
     def summary(self) -> str:
-        total = len(self.checks)
-        ok = sum(1 for c in self.checks if c.status == Status.CONFORMANT)
-        non_conf = sum(1 for c in self.checks if c.status == Status.NON_CONFORMANT)
-        warnings = sum(1 for c in self.checks if c.status == Status.WARNING)
+        # Exclude per-FID detail entries from the rule count
+        rule_checks = [
+            c for c in self.checks
+            if not (c.name.startswith("Error in feature FID") or
+                    c.name.startswith("Warning in feature FID"))
+        ]
+        total    = len(rule_checks)
+        ok       = sum(1 for c in rule_checks if c.status == Status.CONFORMANT)
+        non_conf = sum(1 for c in rule_checks if c.status == Status.NON_CONFORMANT)
+        warnings = sum(1 for c in rule_checks if c.status == Status.WARNING)
         parts = [f"{total} rules executed ({ok} conformant"]
         if non_conf:
             parts.append(f", {non_conf} non-conformant")
@@ -97,17 +103,30 @@ class ValidationReport:
         return "".join(parts)
 
     def summary_by_category(self) -> dict[str, dict]:
+        # FID-level detail entries (added in detailed topological mode) must not
+        # be counted as individual rules — they are sub-items of "Topological errors".
+        # We identify them by their name pattern: "Error in feature FID …" or
+        # "Warning in feature FID …".
+        def _is_fid_detail(check) -> bool:
+            n = check.name
+            return n.startswith("Error in feature FID") or \
+                   n.startswith("Warning in feature FID")
+
         categories = {}
         for cat_name, checks in [
-            ("Format Consistency", self.format_checks),
-            ("Conceptual Consistency", self.conceptual_checks),
-            ("Domain Consistency", self.domain_checks),
+            ("Format Consistency",      self.format_checks),
+            ("Conceptual Consistency",  self.conceptual_checks),
+            ("Domain Consistency",      self.domain_checks),
             ("Topological Consistency", self.topological_checks),
         ]:
             if checks:
-                ok = sum(1 for c in checks if c.status == Status.CONFORMANT)
-                non_conf = sum(1 for c in checks if c.status == Status.NON_CONFORMANT)
-                warnings = sum(1 for c in checks if c.status == Status.WARNING)
+                # Exclude per-FID detail rows from the rule count
+                rule_checks = [c for c in checks if not _is_fid_detail(c)]
+                if not rule_checks:
+                    continue
+                ok       = sum(1 for c in rule_checks if c.status == Status.CONFORMANT)
+                non_conf = sum(1 for c in rule_checks if c.status == Status.NON_CONFORMANT)
+                warnings = sum(1 for c in rule_checks if c.status == Status.WARNING)
                 if non_conf > 0:
                     status = Status.NON_CONFORMANT
                 elif warnings > 0:
@@ -115,7 +134,7 @@ class ValidationReport:
                 else:
                     status = Status.CONFORMANT
                 categories[cat_name] = {
-                    "total": len(checks),
+                    "total": len(rule_checks),
                     "conformant": ok,
                     "non_conformant": non_conf,
                     "warnings": warnings,
@@ -170,8 +189,13 @@ def _extract_config(layout: dict) -> tuple:
 
     crs_epsg = layout["crs"]["epsg"]
     crs_name = layout["crs"]["name"]
+    # Build a dict of accepted (non-preferred) CRS: {epsg: name}
+    accepted_crs = {
+        entry["epsg"]: entry["name"]
+        for entry in layout["crs"].get("accepted", [])
+    }
 
-    return expected_layers, layers_with_required_fields, layers_with_forbidden_fields, class_domain, crs_epsg, crs_name, absence_status
+    return expected_layers, layers_with_required_fields, layers_with_forbidden_fields, class_domain, crs_epsg, crs_name, absence_status, accepted_crs
 
 
 # Load layout
@@ -184,6 +208,7 @@ _LAYOUT = _load_layout()
     EXPECTED_CRS_EPSG,
     EXPECTED_CRS_NAME,
     ABSENCE_STATUS,
+    ACCEPTED_CRS,          # {epsg: name} — accepted but non-preferred CRS (WARNING)
 ) = _extract_config(_LAYOUT)
 
 # Derive compatibility lists
@@ -295,17 +320,38 @@ def validate_format(base_path: Path) -> list[CheckResult]:
 
     try:
         existing_layers = list_layers(base_path)
-        results.append(CheckResult(
-            name="Dataset readability",
-            status=Status.CONFORMANT,
-            details=f"Dataset readable, {len(existing_layers)} layer(s) found",
-            category="format",
-        ))
+        if len(existing_layers) == 0:
+            results.append(CheckResult(
+                name="Dataset readability",
+                status=Status.NON_CONFORMANT,
+                details="Dataset readable but contains no layers",
+                category="format",
+            ))
+        else:
+            results.append(CheckResult(
+                name="Dataset readability",
+                status=Status.CONFORMANT,
+                details=f"Dataset readable, {len(existing_layers)} layer(s) found",
+                category="format",
+            ))
     except Exception as e:
+        err_msg = str(e)
+        # Replace raw GDAL/pyogrio technical messages with user-friendly text
+        _NO_FORMAT_PHRASES = (
+            "not recognized as being in a supported file format",
+            "not recognized as a supported file format",
+            "no layers",
+            "Unable to open",
+            "No such file",
+        )
+        if any(p.lower() in err_msg.lower() for p in _NO_FORMAT_PHRASES):
+            user_msg = "Dataset readable but contains no layers or is not a valid GeoPackage/GDB"
+        else:
+            user_msg = f"Error reading dataset: {err_msg}"
         results.append(CheckResult(
             name="Dataset readability",
             status=Status.NON_CONFORMANT,
-            details=f"Error reading dataset: {str(e)}",
+            details=user_msg,
             category="format",
         ))
 
@@ -393,6 +439,20 @@ def validate_conceptual_consistency(base_path: Path, layer_filter: str | None = 
         gdf_sample = gpd.read_file(base_path, layer=real_name, rows=1)
         columns = gdf_sample.columns.tolist()
 
+        # Guard: gpd.read_file may return a plain DataFrame (no .crs) when the
+        # layer has no geometry column.  Report as a specific error and skip
+        # all further checks for this layer.
+        import geopandas as _gpd
+        if not isinstance(gdf_sample, _gpd.GeoDataFrame):
+            results.append(CheckResult(
+                name="Geometry column missing",
+                status=Status.NON_CONFORMANT,
+                details=f"Layer '{real_name}' has no geometry column",
+                category="conceptual",
+                layer=layer_name,
+            ))
+            continue  # skip CRS / attribute checks for this layer
+
         if layer_name in LAYERS_WITH_CLASS:
             col_class = next((c for c in columns if c.upper() == "CLASSE"), None)
             if col_class is None:
@@ -440,19 +500,32 @@ def validate_conceptual_consistency(base_path: Path, layer_filter: str | None = 
                 category="conceptual",
                 layer=layer_name,
             ))
-        elif gdf_sample.crs.to_epsg() != EXPECTED_CRS_EPSG:
+        elif gdf_sample.crs.to_epsg() == EXPECTED_CRS_EPSG:
             results.append(CheckResult(
                 name="CRS",
-                status=Status.NON_CONFORMANT,
-                details=f"Layer '{real_name}' has EPSG:{gdf_sample.crs.to_epsg()} (expected EPSG:{EXPECTED_CRS_EPSG})",
+                status=Status.CONFORMANT,
+                details=EXPECTED_CRS_NAME,
+                category="conceptual",
+                layer=layer_name,
+            ))
+        elif gdf_sample.crs.to_epsg() in ACCEPTED_CRS:
+            # CRS is recognised but not the preferred standard → WARNING
+            accepted_name = ACCEPTED_CRS[gdf_sample.crs.to_epsg()]
+            results.append(CheckResult(
+                name="CRS",
+                status=Status.WARNING,
+                details=(
+                    f"Layer '{real_name}' uses EPSG:{gdf_sample.crs.to_epsg()} ({accepted_name}). "
+                    f"Accepted, but the expected CRS is EPSG:{EXPECTED_CRS_EPSG} ({EXPECTED_CRS_NAME})"
+                ),
                 category="conceptual",
                 layer=layer_name,
             ))
         else:
             results.append(CheckResult(
                 name="CRS",
-                status=Status.CONFORMANT,
-                details=EXPECTED_CRS_NAME,
+                status=Status.NON_CONFORMANT,
+                details=f"Layer '{real_name}' has EPSG:{gdf_sample.crs.to_epsg()} (expected EPSG:{EXPECTED_CRS_EPSG})",
                 category="conceptual",
                 layer=layer_name,
             ))
@@ -629,6 +702,12 @@ def validate_topological_consistency(base_path: Path, progress_callback=None, la
         layer_info = pyogrio.read_info(str(base_path), layer=real_name)
         geom_type_str = layer_info.get("geometry_type", "") if layer_info else ""
         geom_type_upper = geom_type_str.upper() if geom_type_str else ""
+
+        # Skip topological checks for non-spatial layers (no geometry column).
+        # validate_conceptual_consistency already reports "Geometry column missing".
+        if not geom_type_str:
+            continue
+
         has_z_or_m = any(dim in geom_type_upper for dim in [" Z", " M", "ZM", "25D"])
 
         if has_z_or_m:
@@ -857,6 +936,18 @@ def validate_topological_consistency_detailed(base_path: Path, progress_callback
     layer_info = pyogrio.read_info(str(base_path), layer=real_name)
     geom_type_str = layer_info.get("geometry_type", "") if layer_info else ""
     geom_type_upper = geom_type_str.upper() if geom_type_str else ""
+
+    # Skip topological checks for non-spatial layers.
+    if not geom_type_str:
+        results.append(CheckResult(
+            name="Geometry column missing",
+            status=Status.NON_CONFORMANT,
+            details=f"Layer '{real_name}' has no geometry column — topological checks skipped",
+            category="topological",
+            layer=layer_filter,
+        ))
+        return results
+
     has_z_or_m = any(dim in geom_type_upper for dim in [" Z", " M", "ZM", "25D"])
 
     if has_z_or_m:
@@ -1063,8 +1154,10 @@ def validate_topological_consistency_detailed(base_path: Path, progress_callback
     ring_warnings = [e for e in topological_errors if e.get("severity", "ERROR") == "WARNING"]
 
     if hard_errors:
+        # Use a translatable suffix pattern for the limit message.
+        # The detail_patterns translator will convert this to the active locale.
         limit_suffix = (
-            f" (showing {len(topological_errors)} of max {error_limit} — processing stopped early)"
+            f" (showing {len(topological_errors)} of max {error_limit}, processing stopped early)"
             if limit_reached else ""
         )
         results.append(CheckResult(
@@ -1193,6 +1286,21 @@ def validate_dataset(base_path: str | Path, progress_callback=None, layer_filter
         _progress(100, _pm.get("completed_invalid_format", "Completed (invalid format)"))
         report.log = _log_entries
         return report
+
+    # Guard: if the base is readable but has zero layers, there is nothing
+    # to validate in the subsequent phases — report and stop gracefully.
+    readability_check = next(
+        (c for c in format_checks if c.name == "Dataset readability"), None
+    )
+    if readability_check and readability_check.status == Status.CONFORMANT:
+        # Extract layer count from the details string "Dataset readable, N layer(s) found"
+        import re as _re
+        _m = _re.search(r"(\d+) layer", readability_check.details)
+        _layer_count = int(_m.group(1)) if _m else -1
+        if _layer_count == 0:
+            _progress(100, _pm.get("completed_invalid_format", "Completed (invalid format)"))
+            report.log = _log_entries
+            return report
 
     # 2. Conceptual consistency (10-40%)
     _progress(15, _pm.get("checking_conceptual", "Checking conceptual consistency..."))

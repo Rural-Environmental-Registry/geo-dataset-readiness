@@ -1,0 +1,28 @@
+# =============================================================================
+# geo-dataset-readiness — .gitignore
+# =============================================================================
+
+# Test artefacts (homologation bases and data scripts — not versioned for now)
+tests/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Distribution / build
+dist/
+build/
+*.egg-info/
+
+# QGIS / IDE
+*.qgs~
+*.qgz.bak
+.vscode/
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db

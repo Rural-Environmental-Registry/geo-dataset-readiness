@@ -4,7 +4,11 @@
   "version": "1.0.0",
   "crs": {
     "epsg": 4674,
-    "name": "SIRGAS 2000 Geographic (EPSG:4674)"
+    "name": "SIRGAS 2000 Geographic (EPSG:4674)",
+    "accepted": [
+      {"epsg": 4326, "name": "WGS 84 Geographic (EPSG:4326)"},
+      {"epsg": 3857, "name": "WGS 84 Web Mercator (EPSG:3857)"}
+    ]
   },
   "accepted_formats": [".gpkg", ".gdb", ".zip"],
   "layers": [

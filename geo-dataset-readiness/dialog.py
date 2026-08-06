@@ -213,7 +213,6 @@ class ValidationDialog(QDialog):
         self.chk_layer_filter.setText(t("chk_layer_filter"))
         self.chk_detailed.setText(t("chk_detailed"))
         self.lbl_error_limit.setText(t("lbl_error_limit"))
-        self.txt_error_limit.setPlaceholderText(t("txt_error_limit_ph"))
         self.btn_validate.setText(t("btn_validate"))
         self.sub_tabs.setTabText(self.sub_tabs.indexOf(self.tab_format), t("subtab_format"))
         self.sub_tabs.setTabText(self.sub_tabs.indexOf(self.tab_conceptual), t("subtab_conceptual"))
@@ -269,10 +268,16 @@ class ValidationDialog(QDialog):
         return self._i18n.translate_detail(detail)
 
     def _localized_summary(self, report) -> str:
-        total    = len(report.checks)
-        ok       = sum(1 for c in report.checks if c.status == Status.CONFORMANT)
-        non_conf = sum(1 for c in report.checks if c.status == Status.NON_CONFORMANT)
-        warnings = sum(1 for c in report.checks if c.status == Status.WARNING)
+        # Exclude per-FID detail entries from counts
+        rule_checks = [
+            c for c in report.checks
+            if not (c.name.startswith("Error in feature FID") or
+                    c.name.startswith("Warning in feature FID"))
+        ]
+        total    = len(rule_checks)
+        ok       = sum(1 for c in rule_checks if c.status == Status.CONFORMANT)
+        non_conf = sum(1 for c in rule_checks if c.status == Status.NON_CONFORMANT)
+        warnings = sum(1 for c in rule_checks if c.status == Status.WARNING)
         return self._i18n.localized_summary(total, ok, non_conf, warnings)
 
 
@@ -433,12 +438,14 @@ class ValidationDialog(QDialog):
         right_group.addWidget(self.lbl_error_limit)
 
         self.txt_error_limit = QLineEdit()
-        self.txt_error_limit.setPlaceholderText(self._t("txt_error_limit_ph"))
+        # No placeholder text — QIntValidator conflicts with text placeholders
+        # that contain letters, causing them to display as "e..." when the
+        # field is cleared. The label already describes the field purpose.
         self.txt_error_limit.setText("10")
         self.txt_error_limit.setEnabled(False)
-        self.txt_error_limit.setFixedWidth(30)
+        self.txt_error_limit.setFixedWidth(36)
         self.txt_error_limit.setAlignment(_ALIGN_CENTER)
-        self.txt_error_limit.setValidator(QIntValidator(1, 1000, self))
+        self.txt_error_limit.setValidator(QIntValidator(1, 9999, self))
         self.txt_error_limit.setStyleSheet(
             f"border:1px solid {GovBRTokens.BORDER}; "
             f"border-radius:{GovBRTokens.RADIUS_SM}px; "
@@ -542,7 +549,9 @@ class ValidationDialog(QDialog):
             return ""
         T = GovBRTokens
         ref = REFERENCES[0]
-        title = ref.get("title", "")
+        # Use localised title when available (e.g. "title_pt_BR"), fall back to "title"
+        locale_key = f"title_{self._locale}"
+        title = ref.get(locale_key) or ref.get("title", "")
         url   = ref.get("url", "")
         if not title or not url:
             return ""
@@ -834,7 +843,19 @@ class ValidationDialog(QDialog):
         if detailed:
             txt = self.txt_error_limit.text().strip()
             if not txt:
-                QMessageBox.warning(self, self._t("warn_no_limit"), self._t("warn_no_limit_msg"))
+                # Ask the user: proceed without a limit (slow) or cancel?
+                msg = QMessageBox(self)
+                msg.setWindowTitle(self._t("warn_no_limit"))
+                msg.setText(self._t("warn_no_limit_msg"))
+                msg.setIcon(QMessageBox.Warning if hasattr(QMessageBox, 'Warning') else QMessageBox.Icon.Warning)
+                btn_ok     = msg.addButton("OK",     QMessageBox.AcceptRole if hasattr(QMessageBox, 'AcceptRole') else QMessageBox.ButtonRole.AcceptRole)
+                btn_cancel = msg.addButton(self._t("btn_cancel"),
+                                           QMessageBox.RejectRole if hasattr(QMessageBox, 'RejectRole') else QMessageBox.ButtonRole.RejectRole)
+                msg.setDefaultButton(btn_cancel)
+                msg.exec_()
+                if msg.clickedButton() == btn_cancel:
+                    return   # user chose to cancel — do not start validation
+                # user chose OK — proceed without limit (error_limit stays None)
             else:
                 error_limit = int(txt)
         self._log_diagnostics(base_path)
@@ -909,6 +930,21 @@ class ValidationDialog(QDialog):
             if idx >= 0: self.sub_tabs.setTabText(idx, t("subtab_topological"))
         self._fill_summary(report)
 
+        # Show a warning dialog for each layer missing a geometry column.
+        # The validator already registered these as NON_CONFORMANT checks so
+        # they appear in the results grid — the message box gives immediate
+        # visibility to the user before they look at the grid.
+        no_geom_checks = [
+            c for c in report.checks
+            if c.name == "Geometry column missing"
+        ]
+        for chk in no_geom_checks:
+            QMessageBox.warning(
+                self,
+                t("warn_no_geometry"),
+                self._i18n.t("ui.warn_no_geometry_msg", layer=chk.layer),
+            )
+
     def _fill_tree(self, tree: QTreeWidget, checks: list[CheckResult], with_layer: bool):
         tree.clear()
         for check in checks:
@@ -921,24 +957,6 @@ class ValidationDialog(QDialog):
             else:
                 item.setText(0, tn); item.setText(1, ts); item.setText(2, td); scol = 1
             color = QColor(GovBRTokens.SUCCESS if check.status == Status.CONFORMANT else GovBRTokens.WARNING_TEXT if check.status == Status.WARNING else GovBRTokens.ERROR)
-            item.setForeground(scol, color)
-            tree.addTopLevelItem(item)
-        for i in range(tree.columnCount()):
-            tree.resizeColumnToContents(i)
-            tn = self._translate_check_name(check.name)
-            ts = self._translate_status(check.status.value)
-            td = self._translate_detail(check.details)
-            if with_layer:
-                item.setText(0, check.layer); item.setText(1, tn)
-                item.setText(2, ts); item.setText(3, td); scol = 2
-            else:
-                item.setText(0, tn); item.setText(1, ts)
-                item.setText(2, td); scol = 1
-            color = QColor(
-                GovBRTokens.SUCCESS if check.status == Status.CONFORMANT
-                else GovBRTokens.WARNING_TEXT if check.status == Status.WARNING
-                else GovBRTokens.ERROR
-            )
             item.setForeground(scol, color)
             tree.addTopLevelItem(item)
         for i in range(tree.columnCount()):
