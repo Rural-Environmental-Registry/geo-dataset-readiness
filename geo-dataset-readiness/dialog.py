@@ -176,7 +176,10 @@ class ValidationDialog(QDialog):
         self._i18n = I18n.from_qgis()
         self._locale = self._i18n.locale
         self.report = None
-        self.setMinimumSize(960, 680)
+        self._layer_mapping = {}  # {expected: found}
+        self._layer_comboboxes = {}  # {expected: QComboBox}
+        self._pending_renames = {}  # {old_name: new_name}
+        self.setMinimumSize(1000, 720)
         self.setStyleSheet(_govbr_stylesheet())
         self.setup_ui()
 
@@ -210,6 +213,9 @@ class ValidationDialog(QDialog):
         self._btn_gpkg.setText(t("btn_select_gpkg"))
         self._btn_gdb.setText(t("btn_select_gdb"))
         self.file_input.setPlaceholderText(t("file_placeholder"))
+        self._mapping_header_label.setText(t("lbl_layer_mapping"))
+        self._btn_rename.setText(t("btn_rename_layers"))
+        self._mapping_table.setHeaderLabels([t("col_expected"), t("col_found"), t("col_situation")])
         self.chk_layer_filter.setText(t("chk_layer_filter"))
         self.chk_detailed.setText(t("chk_detailed"))
         self.lbl_error_limit.setText(t("lbl_error_limit"))
@@ -376,20 +382,69 @@ class ValidationDialog(QDialog):
         file_row.addWidget(self._btn_gdb)
         layout.addLayout(file_row)
 
-        # ── Row: layer filter + detailed validation ──────────────────────
-        # Layout intent:
-        #   LEFT  [✓ Validar Camada] [▼ combo]  ←— close spacing
-        #                                   ←— expanding stretch
-        #   RIGHT                [✓ Validação Detalhada] [label] [input] →
-        #         The right group starts at the horizontal centre of the
-        #         "Validar Base" button (which itself is centred via equal
-        #         stretches in btn_row).  This is achieved by wrapping the
-        #         right group in its own QHBoxLayout with a leading stretch
-        #         that mirrors the left stretch, making both groups symmetric.
+        # ── Layer Mapping Section ──────────────────────────────────────
+        # Always visible for better UX - shows structure even before file selection
+        self._mapping_frame = QFrame()
+        self._mapping_frame.setVisible(True)  # Always visible
+        mapping_layout = QVBoxLayout(self._mapping_frame)
+        mapping_layout.setContentsMargins(0, 12, 0, 8)
+        mapping_layout.setSpacing(8)
 
+        # Header
+        self._mapping_header_label = QLabel(self._t("lbl_layer_mapping"))
+        self._mapping_header_label.setStyleSheet(f"font-weight:600; font-size:{GovBRTokens.FONT_SIZE_MD}px; color:{GovBRTokens.TEXT_PRIMARY};")
+        mapping_layout.addWidget(self._mapping_header_label)
+
+        # Summary
+        self._mapping_summary_label = QLabel(self._t("lbl_mapping_summary").format(total=10, found=0, pending=0))
+        self._mapping_summary_label.setStyleSheet(f"color:{GovBRTokens.TEXT_SECONDARY}; font-size:{GovBRTokens.FONT_SIZE_SM}px;")
+        mapping_layout.addWidget(self._mapping_summary_label)
+
+        # Table - starts with placeholder content
+        self._mapping_table = QTreeWidget()
+        self._mapping_table.setHeaderLabels([self._t("col_expected"), self._t("col_found"), self._t("col_situation")])
+        self._mapping_table.setAlternatingRowColors(True)
+        self._mapping_table.setMinimumHeight(180)
+        self._mapping_table.setMaximumHeight(220)
+        self._mapping_table.setColumnWidth(0, 220)
+        self._mapping_table.setColumnWidth(1, 280)
+        self._mapping_table.setColumnWidth(2, 180)
+        
+        # Add placeholder rows to show expected structure
+        from .validator import EXPECTED_LAYERS
+        for expected in EXPECTED_LAYERS:
+            item = QTreeWidgetItem()
+            item.setText(0, expected)
+            item.setText(1, "—")
+            item.setText(2, "")
+            item.setForeground(0, QColor(GovBRTokens.TEXT_SECONDARY))
+            item.setForeground(1, QColor(GovBRTokens.TEXT_SECONDARY))
+            self._mapping_table.addTopLevelItem(item)
+        
+        mapping_layout.addWidget(self._mapping_table)
+
+        # Rename button
+        rename_btn_row = QHBoxLayout()
+        self._btn_rename = QPushButton(self._t("btn_rename_layers"))
+        self._btn_rename.setObjectName("secondaryBtn")
+        self._btn_rename.setCursor(_CURSOR_POINTING)
+        self._btn_rename.setEnabled(False)
+        self._btn_rename.clicked.connect(self._rename_layers)
+        rename_btn_row.addStretch()
+        rename_btn_row.addWidget(self._btn_rename)
+        mapping_layout.addLayout(rename_btn_row)
+
+        layout.addWidget(self._mapping_frame)
+        
+        # ── Divider line before validation controls ────────────────────
+        divider_frame = QFrame()
+        divider_frame.setObjectName("divider")
+        layout.addWidget(divider_frame)
+
+        # ── Row: layer filter + detailed validation ──────────────────────
         layer_row = QHBoxLayout()
         layer_row.setContentsMargins(0, 4, 0, 4)
-        layer_row.setSpacing(0)   # spacing managed per sub-group below
+        layer_row.setSpacing(0)
 
         # — Left group: checkbox + combobox (tight spacing) —
         left_group = QHBoxLayout()
@@ -412,8 +467,6 @@ class ValidationDialog(QDialog):
         left_group.addWidget(self.cmb_layer_filter)
 
         layer_row.addLayout(left_group)
-
-        # — Expanding stretch between the two groups —
         layer_row.addStretch(1)
 
         # — Right group: detailed + label + input —
@@ -438,9 +491,6 @@ class ValidationDialog(QDialog):
         right_group.addWidget(self.lbl_error_limit)
 
         self.txt_error_limit = QLineEdit()
-        # No placeholder text — QIntValidator conflicts with text placeholders
-        # that contain letters, causing them to display as "e..." when the
-        # field is cleared. The label already describes the field purpose.
         self.txt_error_limit.setText("10")
         self.txt_error_limit.setEnabled(False)
         self.txt_error_limit.setFixedWidth(36)
@@ -456,9 +506,6 @@ class ValidationDialog(QDialog):
         right_group.addWidget(self.txt_error_limit)
 
         layer_row.addLayout(right_group)
-
-        # — Trailing stretch mirrors the leading stretch so the right group
-        #   aligns to the horizontal centre of the "Validar Base" button —
         layer_row.addStretch(1)
 
         layout.addLayout(layer_row)
@@ -687,6 +734,8 @@ class ValidationDialog(QDialog):
             self.btn_validate.setEnabled(True)
             self.chk_layer_filter.setEnabled(True)
             self._hide_results()
+            self._load_layer_mapping(Path(filepath))
+        # If cancelled, no action needed - table remains in current state
 
     def _browse_gdb(self):
         dirpath = QFileDialog.getExistingDirectory(self, self._t("dlg_select_gdb"), "", _SHOW_DIRS_ONLY)
@@ -696,8 +745,10 @@ class ValidationDialog(QDialog):
                 self.btn_validate.setEnabled(True)
                 self.chk_layer_filter.setEnabled(True)
                 self._hide_results()
+                self._load_layer_mapping(Path(dirpath))
             else:
                 QMessageBox.warning(self, self._t("err_invalid_format"), self._t("err_invalid_format_msg"))
+        # If cancelled, no action needed - table remains in current state
 
     def _on_layer_filter_toggled(self, state):
         enabled = int(state) == int(_QT_CHECKED)
@@ -823,12 +874,277 @@ class ValidationDialog(QDialog):
             except Exception: pass
         return t("diag_na")
 
+    # ------------------------------------------------------------------
+    # Layer Mapping Functions
+    # ------------------------------------------------------------------
+
+    def _load_layer_mapping(self, base_path: Path):
+        """Loads and displays the layer mapping table."""
+        from .validator import get_layer_mapping, list_layers, EXPECTED_LAYERS
+        
+        try:
+            # Get the mapping
+            mapping = get_layer_mapping(base_path)
+            self._layer_mapping = mapping
+            
+            # Get all existing layers
+            existing_layers = list_layers(base_path)
+            
+            # Clear the table
+            self._mapping_table.clear()
+            self._layer_comboboxes.clear()
+            
+            # Count statistics
+            found_count = sum(1 for v in mapping.values() if v is not None)
+            pending_count = len(mapping) - found_count
+            
+            # Update summary
+            self._mapping_summary_label.setText(
+                self._t("lbl_mapping_summary").format(
+                    total=len(mapping),
+                    found=found_count,
+                    pending=pending_count
+                )
+            )
+            self._mapping_summary_label.setStyleSheet(
+                f"color:{GovBRTokens.TEXT_PRIMARY}; font-size:{GovBRTokens.FONT_SIZE_SM}px; font-weight:600;"
+            )
+            
+            # Populate table
+            for expected in EXPECTED_LAYERS:
+                found = mapping.get(expected)
+                item = QTreeWidgetItem()
+                item.setText(0, expected)
+                
+                if found is not None:
+                    # Coincident layer - locked
+                    item.setText(1, found)
+                    item.setText(2, self._t("sit_coincident"))
+                    item.setForeground(2, QColor(GovBRTokens.SUCCESS))
+                    # Disable editing
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable if hasattr(Qt, 'ItemFlag') else item.flags() & ~Qt.ItemIsEditable)
+                else:
+                    # Not found - add combobox
+                    item.setText(1, "")
+                    item.setText(2, self._t("sit_not_found"))
+                    item.setForeground(2, QColor(GovBRTokens.ERROR))
+                    
+                    # Create combobox with available layers
+                    combo = QComboBox()
+                    combo.addItem(self._t("select_layer"), "")
+                    
+                    # Add layers that are not already mapped
+                    used_layers = [v for v in mapping.values() if v is not None]
+                    for layer in existing_layers:
+                        if layer not in used_layers and layer.upper() not in [e.upper() for e in EXPECTED_LAYERS]:
+                            combo.addItem(layer, layer)
+                    
+                    combo.currentIndexChanged.connect(lambda idx, exp=expected: self._on_mapping_changed(exp, idx))
+                    self._layer_comboboxes[expected] = combo
+                    
+                self._mapping_table.addTopLevelItem(item)
+                
+                # Set combobox if applicable
+                if found is None and expected in self._layer_comboboxes:
+                    self._mapping_table.setItemWidget(item, 1, self._layer_comboboxes[expected])
+            
+            self._update_rename_button()
+            
+        except Exception as e:
+            print(f"Error loading layer mapping: {e}")
+            # Reset to placeholder state
+            self._reset_mapping_table()
+    
+    def _reset_mapping_table(self):
+        """Resets the mapping table to placeholder state."""
+        from .validator import EXPECTED_LAYERS
+        
+        self._mapping_table.clear()
+        self._layer_comboboxes.clear()
+        self._layer_mapping.clear()
+        self._pending_renames.clear()
+        
+        self._mapping_summary_label.setText(
+            self._t("lbl_mapping_summary").format(total=len(EXPECTED_LAYERS), found=0, pending=0)
+        )
+        self._mapping_summary_label.setStyleSheet(
+            f"color:{GovBRTokens.TEXT_SECONDARY}; font-size:{GovBRTokens.FONT_SIZE_SM}px;"
+        )
+        
+        # Add placeholder rows
+        for expected in EXPECTED_LAYERS:
+            item = QTreeWidgetItem()
+            item.setText(0, expected)
+            item.setText(1, "—")
+            item.setText(2, "")
+            item.setForeground(0, QColor(GovBRTokens.TEXT_SECONDARY))
+            item.setForeground(1, QColor(GovBRTokens.TEXT_SECONDARY))
+            self._mapping_table.addTopLevelItem(item)
+        
+        self._btn_rename.setEnabled(False)
+    
+    def _on_mapping_changed(self, expected_layer: str, combo_index: int):
+        """Called when user selects a layer in the combobox."""
+        combo = self._layer_comboboxes.get(expected_layer)
+        if combo is None:
+            return
+        
+        selected = combo.itemData(combo_index)
+        
+        # Update mapping
+        if selected:
+            self._layer_mapping[expected_layer] = selected
+            self._pending_renames[selected] = expected_layer
+            
+            # Update situation column
+            for i in range(self._mapping_table.topLevelItemCount()):
+                item = self._mapping_table.topLevelItem(i)
+                if item.text(0) == expected_layer:
+                    item.setText(2, self._t("sit_rename"))
+                    item.setForeground(2, QColor(GovBRTokens.WARNING))
+                    break
+            
+            # Update other comboboxes to remove this layer from options
+            self._update_combobox_options()
+        else:
+            # Deselected
+            if expected_layer in self._layer_mapping:
+                old_selected = self._layer_mapping[expected_layer]
+                if old_selected in self._pending_renames:
+                    del self._pending_renames[old_selected]
+                self._layer_mapping[expected_layer] = None
+                
+            # Update situation column
+            for i in range(self._mapping_table.topLevelItemCount()):
+                item = self._mapping_table.topLevelItem(i)
+                if item.text(0) == expected_layer:
+                    item.setText(2, self._t("sit_not_found"))
+                    item.setForeground(2, QColor(GovBRTokens.ERROR))
+                    break
+            
+            self._update_combobox_options()
+        
+        self._update_rename_button()
+    
+    def _update_combobox_options(self):
+        """Updates all comboboxes to reflect currently selected layers."""
+        from .validator import list_layers, EXPECTED_LAYERS
+        
+        base_path = self.file_input.text()
+        if not base_path:
+            return
+        
+        try:
+            existing_layers = list_layers(Path(base_path))
+            
+            # Get all currently selected layers
+            selected_layers = list(self._pending_renames.keys())
+            coincident_layers = [v for k, v in self._layer_mapping.items() if v is not None and k not in self._pending_renames.values()]
+            used_layers = selected_layers + coincident_layers
+            
+            # Update each combobox
+            for expected, combo in self._layer_comboboxes.items():
+                current_selection = combo.itemData(combo.currentIndex())
+                combo.blockSignals(True)
+                combo.clear()
+                combo.addItem(self._t("select_layer"), "")
+                
+                # Add available layers
+                for layer in existing_layers:
+                    if layer not in used_layers or layer == current_selection:
+                        if layer.upper() not in [e.upper() for e in EXPECTED_LAYERS]:
+                            combo.addItem(layer, layer)
+                
+                # Restore selection
+                if current_selection:
+                    index = combo.findData(current_selection)
+                    if index >= 0:
+                        combo.setCurrentIndex(index)
+                
+                combo.blockSignals(False)
+                
+        except Exception as e:
+            print(f"Error updating combobox options: {e}")
+    
+    def _update_rename_button(self):
+        """Enables/disables the rename button based on pending renames."""
+        self._btn_rename.setEnabled(len(self._pending_renames) > 0)
+    
+    def _rename_layers(self):
+        """Renames the selected layers in the dataset."""
+        from .validator import rename_layer_in_dataset, check_gdal_version_for_gdb_rename
+        
+        base_path = Path(self.file_input.text())
+        if not base_path:
+            return
+        
+        # Check GDAL version for .gdb
+        if base_path.suffix.lower() == ".gdb":
+            supported, version = check_gdal_version_for_gdb_rename()
+            if not supported:
+                QMessageBox.critical(
+                    self,
+                    self._t("err_gdb_version"),
+                    self._t("err_gdb_version_msg").format(version=version)
+                )
+                return
+        
+        # Perform renames
+        renamed_layers = []
+        errors = []
+        
+        for old_name, new_name in self._pending_renames.items():
+            success, message = rename_layer_in_dataset(base_path, old_name, new_name)
+            if success:
+                renamed_layers.append(f"{old_name} → {new_name}")
+            else:
+                errors.append(f"{old_name}: {message}")
+        
+        if errors:
+            QMessageBox.critical(
+                self,
+                self._t("err_rename_title"),
+                self._t("err_rename_msg").format(e="\n".join(errors))
+            )
+        elif renamed_layers:
+            QMessageBox.information(
+                self,
+                self._t("success_rename"),
+                self._t("success_rename_msg").format(layers="\n".join(renamed_layers))
+            )
+            # Reload mapping
+            self._pending_renames.clear()
+            self._load_layer_mapping(base_path)
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
 
     def run_validation(self):
         import time
         base_path = self.file_input.text()
         if not base_path:
             return
+        
+        # Check for missing layers that haven't been mapped
+        from .validator import EXPECTED_LAYERS
+        missing_layers = []
+        for expected in EXPECTED_LAYERS:
+            found = self._layer_mapping.get(expected)
+            if found is None and expected not in self._pending_renames.values():
+                missing_layers.append(expected)
+        
+        if missing_layers:
+            reply = QMessageBox.question(
+                self,
+                self._t("warn_missing_layers"),
+                self._t("warn_missing_layers_msg"),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if hasattr(QMessageBox, 'StandardButton') else QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.No if hasattr(QMessageBox, 'StandardButton') else QMessageBox.No
+            )
+            if reply != (QMessageBox.StandardButton.Yes if hasattr(QMessageBox, 'StandardButton') else QMessageBox.Yes):
+                return
+        
         layer_filter = None
         if self.chk_layer_filter.isChecked():
             layer_filter = self.cmb_layer_filter.currentText().strip()

@@ -293,6 +293,108 @@ def extract_gpkg_from_zip(zip_path: Path) -> Optional[Path]:
 
 
 # ---------------------------------------------------------------------------
+# LAYER RENAMING
+# ---------------------------------------------------------------------------
+
+
+def check_gdal_version_for_gdb_rename() -> tuple[bool, str]:
+    """
+    Checks if GDAL version supports renaming layers in .gdb (requires GDAL >= 3.7.0 with OpenFileGDB write support).
+    Returns (is_supported, version_string).
+    """
+    try:
+        from osgeo import gdal
+        gdal_version = gdal.__version__
+        version_parts = gdal_version.split(".")
+        major = int(version_parts[0])
+        minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+        
+        # GDAL 3.7.0+ has OpenFileGDB write support
+        is_supported = (major > 3) or (major == 3 and minor >= 7)
+        return is_supported, gdal_version
+    except Exception as e:
+        return False, f"Error checking GDAL version: {e}"
+
+
+def rename_layer_in_dataset(base_path: Path, old_name: str, new_name: str) -> tuple[bool, str]:
+    """
+    Renames a layer in a GeoPackage or GeoDatabase.
+    Returns (success, message).
+    """
+    try:
+        from osgeo import gdal, ogr
+        
+        # Check if it's a .gdb
+        is_gdb = base_path.suffix.lower() == ".gdb" and base_path.is_dir()
+        
+        if is_gdb:
+            # Check GDAL version for .gdb write support
+            supported, version = check_gdal_version_for_gdb_rename()
+            if not supported:
+                return False, f"GDB renaming requires GDAL >= 3.7.0 (current: {version})"
+        
+        # Open dataset with update capability
+        ds = ogr.Open(str(base_path), 1)  # 1 = update mode
+        if ds is None:
+            return False, "Could not open dataset for writing"
+        
+        # Find the layer
+        layer = ds.GetLayerByName(old_name)
+        if layer is None:
+            ds = None
+            return False, f"Layer '{old_name}' not found"
+        
+        # Execute SQL to rename (works for both GPKG and GDB with GDAL 3.7+)
+        if is_gdb:
+            # For GDB, use ALTER TABLE
+            sql = f'ALTER TABLE "{old_name}" RENAME TO "{new_name}"'
+        else:
+            # For GPKG, use ALTER TABLE
+            sql = f'ALTER TABLE "{old_name}" RENAME TO "{new_name}"'
+        
+        result = ds.ExecuteSQL(sql)
+        if result is not None:
+            ds.ReleaseResultSet(result)
+        
+        ds = None  # Close dataset
+        
+        # Verify the rename was successful
+        ds_check = ogr.Open(str(base_path))
+        if ds_check is None:
+            return False, "Could not verify rename operation"
+        
+        new_layer = ds_check.GetLayerByName(new_name)
+        old_layer_still_exists = ds_check.GetLayerByName(old_name)
+        ds_check = None
+        
+        if new_layer is not None and old_layer_still_exists is None:
+            return True, f"Layer renamed from '{old_name}' to '{new_name}'"
+        else:
+            return False, "Rename operation did not complete successfully"
+            
+    except Exception as e:
+        return False, f"Error renaming layer: {str(e)}"
+
+
+def get_layer_mapping(base_path: Path) -> dict[str, str | None]:
+    """
+    Creates a mapping of expected layers to found layers.
+    Returns dict: {expected_layer: found_layer_or_None}
+    """
+    try:
+        existing_layers = list_layers(base_path)
+    except Exception:
+        return {layer: None for layer in EXPECTED_LAYERS}
+    
+    mapping = {}
+    for expected in EXPECTED_LAYERS:
+        found = find_layer_name(existing_layers, expected)
+        mapping[expected] = found
+    
+    return mapping
+
+
+# ---------------------------------------------------------------------------
 # FORMAT CONSISTENCY
 # ---------------------------------------------------------------------------
 
