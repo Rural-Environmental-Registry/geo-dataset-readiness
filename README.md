@@ -1,6 +1,6 @@
 # SICAR AD — Validate Environmental Base Structure
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue)](https://github.com/dataprev/qgis-plugin-validador/releases)
+[![Version](https://img.shields.io/badge/version-0.0.1-blue)](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/releases)
 [![License](https://img.shields.io/badge/license-GPLv3-green)](LICENSE.txt)
 [![QGIS](https://img.shields.io/badge/QGIS-3.22%2B-brightgreen)](https://qgis.org)
 [![Status](https://img.shields.io/badge/status-experimental-orange)]()
@@ -35,7 +35,7 @@ Results are exported as a structured CSV report with pass/fail status per rule.
 
 ## Installation
 
-1. Download the latest release `.zip` file from the [Releases](https://github.com/dataprev/qgis-plugin-validador/releases) page.
+1. Download the latest release `.zip` file from the [Releases](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/releases) page.
 2. In QGIS, open **Plugins → Manage and Install Plugins → Install from ZIP**.
 3. Select the downloaded `.zip` file and click **Install Plugin**.
 4. The plugin will appear under the **Plugins** menu as *SICAR AD — Validate Environmental Base Structure*.
@@ -82,7 +82,7 @@ For the full list of validation rules, expected layers, attribute domains, and t
 
 ## Contributing
 
-Bug reports and feature requests are welcome via [GitHub Issues](https://github.com/dataprev/qgis-plugin-validador/issues).
+Bug reports and feature requests are welcome via [GitHub Issues](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/issues).
 
 For code contributions, please open a pull request with a clear description of the proposed change.
 
@@ -98,4 +98,4 @@ This project is licensed under the **GNU General Public License v3.0**. See [LIC
 
 Developed by **[Dataprev](https://www.dataprev.gov.br)**  
 For the **Serviço Florestal Brasileiro (SFB)** — SICAR AD program  
-Contact: sicar@dataprev.gov.br
+Contact: [support contact]

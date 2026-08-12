@@ -1,6 +1,6 @@
 # SICAR AD — Validar Estrutura da Base Ambiental
 
-[![Versão](https://img.shields.io/badge/versão-0.0.1-blue)](https://github.com/dataprev/qgis-plugin-validador/releases)
+[![Versão](https://img.shields.io/badge/versão-0.0.1-blue)](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/releases)
 [![Licença](https://img.shields.io/badge/licença-GPLv3-green)](LICENSE.txt)
 [![QGIS](https://img.shields.io/badge/QGIS-3.22%2B-brightgreen)](https://qgis.org)
 [![Status](https://img.shields.io/badge/status-experimental-orange)]()
@@ -35,7 +35,7 @@ Os resultados são exportados como um relatório CSV estruturado com status de c
 
 ## Instalação
 
-1. Baixe o arquivo `.zip` da versão mais recente na página de [Releases](https://github.com/dataprev/qgis-plugin-validador/releases).
+1. Baixe o arquivo `.zip` da versão mais recente na página de [Releases](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/releases).
 2. No QGIS, acesse **Plugins → Gerenciar e Instalar Plugins → Instalar a partir de ZIP**.
 3. Selecione o arquivo `.zip` baixado e clique em **Instalar Plugin**.
 4. O plugin estará disponível no menu **Plugins** como *SICAR AD — Validar Estrutura da Base Ambiental*.
@@ -82,7 +82,7 @@ Para a lista completa de regras de validação, camadas esperadas, domínios de 
 
 ## Contribuição
 
-Relatórios de bugs e solicitações de funcionalidades são bem-vindos via [GitHub Issues](https://github.com/dataprev/qgis-plugin-validador/issues).
+Relatórios de bugs e solicitações de funcionalidades são bem-vindos via [GitHub Issues](https://github.com/Rural-Environmental-Registry/geo-dataset-readiness/issues).
 
 Para contribuições de código, abra um pull request com uma descrição clara da mudança proposta.
 

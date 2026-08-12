@@ -58,6 +58,8 @@
     "warn_no_limit_msg":   "Error count limit not defined. Processing may be extremely slow.",
     "warn_no_geometry":    "Layer without geometry",
     "warn_no_geometry_msg": "Layer '{layer}' has no geometry column and cannot be geometrically validated. All other checks were executed.",
+    "pdf_saved_title":     "PDF generated successfully",
+    "pdf_saved_no_viewer": "The report was saved to:\n\n{path}\n\nNo PDF viewer was found on this system. Open the file manually using your file manager.",
     "err_validation":      "Error",
     "err_validation_msg":  "Validation error:\n{e}",
     "warn_export":         "Warning",

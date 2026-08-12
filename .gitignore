@@ -11,6 +11,10 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+
+# Jupyter checkpoints
+*.checkpoint
+.ipynb_checkpoints/
 *$py.class
 
 # Distribution / build

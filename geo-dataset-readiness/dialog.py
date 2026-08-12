@@ -382,6 +382,11 @@ class ValidationDialog(QDialog):
         file_row.addWidget(self._btn_gdb)
         layout.addLayout(file_row)
 
+        # ── Divider between file selector and layer mapping ─────────────
+        file_mapping_divider = QFrame()
+        file_mapping_divider.setObjectName("divider")
+        layout.addWidget(file_mapping_divider)
+
         # ── Layer Mapping Section ──────────────────────────────────────
         # Always visible for better UX - shows structure even before file selection
         self._mapping_frame = QFrame()
@@ -1384,6 +1389,33 @@ class ValidationDialog(QDialog):
             return
         try:
             result_path = export_report_pdf(self.report, filepath, locale=self._locale)
-            os.startfile(str(result_path))
+            # Try to open the generated PDF with the system default viewer.
+            # Falls back gracefully if no viewer is available.
+            import sys as _sys
+            import shutil as _shutil
+            import subprocess as _sp
+
+            _opened = False
+            if _sys.platform == "win32":
+                os.startfile(str(result_path))
+                _opened = True
+            elif _sys.platform == "darwin":
+                _opened = True
+                _sp.Popen(["open", str(result_path)])
+            else:
+                # Linux — try common openers in order of preference
+                for _cmd in ("xdg-open", "evince", "okular", "firefox", "eog"):
+                    if _shutil.which(_cmd):
+                        _sp.Popen([_cmd, str(result_path)])
+                        _opened = True
+                        break
+
+            if not _opened:
+                # No viewer found — inform the user where the file was saved
+                QMessageBox.information(
+                    self,
+                    self._t("pdf_saved_title"),
+                    self._t("pdf_saved_no_viewer", path=str(result_path)),
+                )
         except Exception as e:
             QMessageBox.critical(self, self._t("err_pdf"), self._t("err_pdf_msg", e=e))

@@ -683,9 +683,11 @@ def validate_domain_consistency(base_path: Path, layer_filter: str | None = None
             try:
                 import pandas as pd
                 pd.to_numeric(gdf[col_class], errors="raise")
+                # Values are numeric but stored as object/string type — WARNING,
+                # not an error, since the data is correct and domain checks still work.
                 results.append(CheckResult(
                     name="CLASSE numeric type",
-                    status=Status.NON_CONFORMANT,
+                    status=Status.WARNING,
                     details=f"Layer '{real_name}': declared type {dtype}, but values are convertible to numeric",
                     category="domain",
                     layer=layer_name,

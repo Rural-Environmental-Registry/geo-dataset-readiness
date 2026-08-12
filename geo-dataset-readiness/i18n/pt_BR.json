@@ -55,6 +55,8 @@
     "warn_no_limit_msg":   "Limite de qtde de erros não definido. Processamento poderá ser extremamente demorado.",
     "warn_no_geometry":    "Camada sem geometria",
     "warn_no_geometry_msg": "A camada '{layer}' não possui coluna de geometria e não pode ser validada geometricamente. As demais verificações foram executadas.",
+    "pdf_saved_title":     "PDF gerado com sucesso",
+    "pdf_saved_no_viewer": "O relatório foi salvo em:\n\n{path}\n\nNenhum visualizador de PDF foi encontrado neste sistema. Abra o arquivo manualmente pelo seu gerenciador de arquivos.",
     "err_validation":      "Erro",
     "err_validation_msg":  "Erro ao validar:\n{e}",
     "warn_export":         "Aviso",
