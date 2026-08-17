@@ -7,9 +7,7 @@
 
 > 🇺🇸 [Read in English](README.md)
 
-Plugin QGIS para validação de consistência lógica de bases geoespaciais ambientais, alinhado à **ISO 19157:2013** — *Informação Geográfica — Qualidade de Dados*.
-
-Desenvolvido pela **[Dataprev](https://www.dataprev.gov.br)** para o programa **SICAR AD** (Sistema de Cadastro Ambiental Rural — Análise Dinamizada), gerenciado pelo **Serviço Florestal Brasileiro (SFB)**.
+Plugin QGIS para validação de consistência lógica de bases geoespaciais ambientais, alinhado à **NOTA TÉCNICA — Orientações gerais sobre as Bases de Referência para a solução da Análise Dinamizada do Cadastro Ambiental Rural (SICAR AD)** e à **ISO 19157:2013** — *Informação Geográfica — Qualidade de Dados*.
 
 ---
 
@@ -22,7 +20,7 @@ Valida quatro categorias de consistência lógica definidas na ISO 19157:2013:
 - **Consistência de domínio** — valida se os valores do atributo `CLASSE` estão dentro dos domínios definidos por camada
 - **Consistência topológica** — detecta geometrias nulas, geometrias vazias, polígonos com área zero, erros topológicos e coordenadas 3D
 
-Os resultados são exportados como um relatório CSV estruturado com status de conformidade/divergência por regra.
+Os resultados são exportados em um relatório PDF com status de conforme/divergente por regra.
 
 ---
 
@@ -71,12 +69,14 @@ Para a lista completa de regras de validação, camadas esperadas, domínios de 
 
 ## Referência Normativa
 
-- **ISO 19157:2013** — Informação geográfica — Qualidade de dados
-  - Consistência lógica
+- **NOTA TÉCNICA** — *Orientações gerais sobre as Bases de Referência para a solução da Análise Dinamizada do Cadastro Ambiental Rural (SICAR AD)*
+  - Serviço Florestal Brasileiro (SFB)
+  - Validação de consistência lógica:
     - Consistência de formato
     - Consistência conceitual
     - Consistência de domínio
     - Consistência topológica
+  - Baseada nos princípios da ISO 19157:2013
 
 ---
 

@@ -7,9 +7,7 @@
 
 > 🇧🇷 [Leia em Português](README_pt.md)
 
-A QGIS plugin for logical consistency validation of environmental geospatial databases, aligned with **ISO 19157:2013** — *Geographic Information — Data Quality*.
-
-Developed by **[Dataprev](https://www.dataprev.gov.br)** for the **SICAR AD** (Sistema de Cadastro Ambiental Rural — Análise Dinamizada) program, managed by the **Serviço Florestal Brasileiro (SFB)**.
+A QGIS plugin for logical consistency validation of environmental geospatial databases, aligned with the **Technical Note — General Guidelines on Reference Bases for the Rural Environmental Registry Dynamized Analysis (SICAR AD)** solution and with **ISO 19157:2013** — *Geographic Information — Data Quality*.
 
 ---
 
@@ -22,7 +20,7 @@ Validates four logical consistency categories defined in ISO 19157:2013:
 - **Domain consistency** — validates that `CLASSE` attribute values fall within defined domains per layer
 - **Topological consistency** — detects null geometries, empty geometries, zero-area polygons, topology errors, and 3D coordinates
 
-Results are exported as a structured CSV report with pass/fail status per rule.
+Results are exported as a PDF report with conformant/non-conformant status per rule.
 
 ---
 
@@ -71,12 +69,14 @@ For the full list of validation rules, expected layers, attribute domains, and t
 
 ## Normative Reference
 
-- **ISO 19157:2013** — Geographic information — Data quality
-  - Logical consistency
+- **Technical Note** — *General Guidelines on Reference Bases for the Rural Environmental Registry Dynamized Analysis (SICAR AD) solution*
+  - Serviço Florestal Brasileiro (SFB)
+  - Logical consistency validation:
     - Format consistency
     - Conceptual consistency
     - Domain consistency
     - Topological consistency
+  - Based on ISO 19157:2013 principles
 
 ---
 
