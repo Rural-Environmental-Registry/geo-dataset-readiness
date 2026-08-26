@@ -576,24 +576,24 @@ class ValidationDialog(QDialog):
         <hr style="border:none; border-top:1px solid {T.DIVIDER}; margin:12px 0;">
         <h3 style="color:{T.INTERACTIVE}; font-weight:600; font-size:13px;">{t("sec_format")}</h3>
         <table style="{tbl}"><tr style="background:{T.SURFACE_ALT};"><th style="{th}">{t("col_rule")}</th><th style="{th}">{t("col_description")}</th></tr>
-        <tr><td style="{td}">Dataset format</td><td style="{td}">GeoPackage (.gpkg) or ESRI File Geodatabase (.gdb)</td></tr>
-        <tr><td style="{td}">Dataset readability</td><td style="{td}">Readable and with at least one layer</td></tr></table>
+        <tr><td style="{td}">{t("rule_dataset_format")}</td><td style="{td}">{t("rule_dataset_format_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_dataset_readability")}</td><td style="{td}">{t("rule_dataset_readability_desc")}</td></tr></table>
         <h3 style="color:{T.INTERACTIVE}; font-weight:600; font-size:13px; margin-top:14px;">{t("sec_conceptual")}</h3>
         <table style="{tbl}"><tr style="background:{T.SURFACE_ALT};"><th style="{th}">{t("col_rule")}</th><th style="{th}">{t("col_description")}</th></tr>
-        <tr><td style="{td}">Layer names</td><td style="{td}">APP, AREA_ANTROPIZADA, AREA_CONSOLIDADA, HIDROGRAFIA, VEGETACAO_2008, VEGETACAO_ATUAL, SERVIDAO, RELEVO, USO_RESTRITO, APP_ESPECIAL</td></tr>
-        <tr><td style="{td}">Records</td><td style="{td}">At least 1 record per layer</td></tr>
-        <tr><td style="{td}">CLASSE attribute</td><td style="{td}">Presence/absence per layer spec</td></tr>
-        <tr><td style="{td}">CRS</td><td style="{td}">SIRGAS 2000 (EPSG:4674)</td></tr></table>
+        <tr><td style="{td}">{t("rule_layer_names")}</td><td style="{td}">APP, AREA_ANTROPIZADA, AREA_CONSOLIDADA, HIDROGRAFIA, VEGETACAO_2008, VEGETACAO_ATUAL, SERVIDAO, RELEVO, USO_RESTRITO, APP_ESPECIAL</td></tr>
+        <tr><td style="{td}">{t("rule_records")}</td><td style="{td}">{t("rule_records_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_classe_attr")}</td><td style="{td}">{t("rule_classe_attr_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_crs")}</td><td style="{td}">{t("rule_crs_desc")}</td></tr></table>
         <h3 style="color:{T.INTERACTIVE}; font-weight:600; font-size:13px; margin-top:14px;">{t("sec_domain")}</h3>
         <table style="{tbl}"><tr style="background:{T.SURFACE_ALT};"><th style="{th}">{t("col_rule")}</th><th style="{th}">{t("col_description")}</th></tr>
-        <tr><td style="{td}">Numeric type</td><td style="{td}">CLASSE is numeric</td></tr>
-        <tr><td style="{td}">Null values</td><td style="{td}">No null values</td></tr>
-        <tr><td style="{td}">Domain</td><td style="{td}">Values within expected interval</td></tr></table>
+        <tr><td style="{td}">{t("rule_numeric_type")}</td><td style="{td}">{t("rule_numeric_type_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_null_values")}</td><td style="{td}">{t("rule_null_values_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_domain")}</td><td style="{td}">{t("rule_domain_desc")}</td></tr></table>
         <h3 style="color:{T.INTERACTIVE}; font-weight:600; font-size:13px; margin-top:14px;">{t("sec_topological")}</h3>
         <table style="{tbl}"><tr style="background:{T.SURFACE_ALT};"><th style="{th}">{t("col_rule")}</th><th style="{th}">{t("col_description")}</th></tr>
-        <tr><td style="{td}">Null/empty geometries</td><td style="{td}">Not allowed</td></tr>
-        <tr><td style="{td}">Topological errors</td><td style="{td}">Valid geometries</td></tr>
-        <tr><td style="{td}">2D geometries</td><td style="{td}">No Z coordinate</td></tr></table>
+        <tr><td style="{td}">{t("rule_null_empty_geom")}</td><td style="{td}">{t("rule_null_empty_geom_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_topo_errors")}</td><td style="{td}">{t("rule_topo_errors_desc")}</td></tr>
+        <tr><td style="{td}">{t("rule_2d_geom")}</td><td style="{td}">{t("rule_2d_geom_desc")}</td></tr></table>
         </div>"""
 
     def _get_references_html(self) -> str:
