@@ -29,6 +29,9 @@ build/
 .vscode/
 *.bak
 
+# Kiro IDE
+.kiro/
+
 # OS
 .DS_Store
 Thumbs.db
