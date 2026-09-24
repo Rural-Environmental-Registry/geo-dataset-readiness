@@ -1,15 +1,15 @@
 """
 build_plugin.py - Packages the QGIS plugin into a ZIP for installation
 
-Generates the file in the format: geo_dataset_readiness_YYYYMMDD_HHMM.zip
+Generates the file in the format: geo_dataset_readiness_v<version>.zip
+The version is read automatically from geo-dataset-readiness/metadata.txt.
 
 Usage:
     python build_plugin.py
 """
 
-import os
+import re
 import zipfile
-from datetime import datetime
 from pathlib import Path
 
 # Project root directory
@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 PLUGIN_DIR = PROJECT_ROOT / "geo-dataset-readiness"
 
 # Plugin name inside the ZIP
-PLUGIN_ZIP_NAME = "geo-dataset-readiness"
+PLUGIN_ZIP_NAME = "geo_dataset_readiness"
 
 # Dist directory
 DIST_DIR = PROJECT_ROOT / "dist"
@@ -28,18 +28,28 @@ DIST_DIR = PROJECT_ROOT / "dist"
 INCLUDE_EXTENSIONS = (".py", ".txt", ".png", ".svg", ".ui", ".ico", ".json", ".jpg", ".jpeg")
 
 
+def _read_version() -> str:
+    """Reads the version from metadata.txt (e.g. 'version=1.0.0' → '1.0.0')."""
+    metadata_path = PLUGIN_DIR / "metadata.txt"
+    if not metadata_path.exists():
+        return "unknown"
+    content = metadata_path.read_text(encoding="utf-8")
+    match = re.search(r"^version\s*=\s*(.+)$", content, re.MULTILINE)
+    return match.group(1).strip() if match else "unknown"
+
+
 def build_zip():
-    """Generates the plugin ZIP with a timestamp in the name."""
+    """Generates the plugin ZIP named with the version from metadata.txt."""
     DIST_DIR.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    zip_name = f"geo_dataset_readiness_{timestamp}.zip"
+    version  = _read_version()
+    zip_name = f"geo_dataset_readiness_v{version}.zip"
     zip_path = DIST_DIR / zip_name
 
     # Collect plugin files (recursively to include assets/)
     files = []
     for f in PLUGIN_DIR.rglob("*"):
-        if f.is_file() and f.suffix in INCLUDE_EXTENSIONS:
+        if f.is_file() and (f.suffix in INCLUDE_EXTENSIONS or f.name == "LICENSE" or f.name.startswith(".")):
             # Skip __pycache__ and dist
             relative = f.relative_to(PLUGIN_DIR)
             if "__pycache__" in str(relative) or str(relative).startswith("dist"):
