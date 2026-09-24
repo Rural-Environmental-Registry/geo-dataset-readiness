@@ -101,8 +101,9 @@ def _touch_point_from_reason(reason: str) -> Optional[tuple[float, float]]:
                 parts = reason.split(marker, 1)[1].strip().split()
                 if len(parts) >= 2:
                     return float(parts[0]), float(parts[1])
-    except (ValueError, IndexError):
-        pass
+    except (ValueError, IndexError) as _e:
+        import logging as _logging
+        _logging.getLogger(__name__).debug("Could not parse error location: %s", _e)
     return None
 
 

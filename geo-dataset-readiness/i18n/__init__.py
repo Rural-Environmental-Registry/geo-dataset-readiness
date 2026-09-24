@@ -92,8 +92,9 @@ def detect_qgis_locale() -> str:
             for loc in available_locales():
                 if loc.lower().startswith(lang):
                     return loc
-    except Exception:
-        pass
+    except Exception as _e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).debug("Locale detection failed: %s", _e)
     return _DEFAULT_LOCALE
 
 
@@ -125,8 +126,9 @@ class I18n:
             if isinstance(pair, (list, tuple)) and len(pair) == 2:
                 try:
                     self._patterns.append((re.compile(pair[0]), pair[1]))
-                except re.error:
-                    pass
+                except re.error as _e:
+                    import logging as _logging
+                    _logging.getLogger(__name__).debug("Invalid i18n pattern skipped: %s", _e)
 
     # ------------------------------------------------------------------
     # Factory

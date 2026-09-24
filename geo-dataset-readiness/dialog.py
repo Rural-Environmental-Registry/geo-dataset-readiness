@@ -26,8 +26,8 @@ To add a new language copy i18n/en_US.json → i18n/<locale>.json and translate.
 
 from pathlib import Path
 
-from qgis.PyQt.QtCore import Qt, QCoreApplication
-from qgis.PyQt.QtGui import QColor, QIntValidator
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QUrl
+from qgis.PyQt.QtGui import QColor, QIntValidator, QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFileDialog,
     QLineEdit, QTreeWidget, QTreeWidgetItem, QMessageBox, QProgressBar,
@@ -853,13 +853,15 @@ class ValidationDialog(QDialog):
                 import winreg
                 k = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
                 n, _ = winreg.QueryValueEx(k, "ProcessorNameString"); winreg.CloseKey(k); return n.strip()
-            except Exception: pass
+            except Exception:  # noqa: BLE001 — optional hardware info, non-critical
+                return self._t("diag_na")
         if platform.system() == "Linux":
             try:
                 with open("/proc/cpuinfo") as f:
                     for l in f:
                         if l.startswith("model name"): return l.split(":", 1)[1].strip()
-            except Exception: pass
+            except Exception:  # noqa: BLE001 — optional hardware info, non-critical
+                return self._t("diag_na")
         return self._t("diag_na")
 
     def _get_ram_info(self) -> str:
@@ -876,7 +878,8 @@ class ValidationDialog(QDialog):
                     _fields_=[("dwLength",ctypes.c_ulong),("dwMemoryLoad",ctypes.c_ulong),("ullTotalPhys",ctypes.c_ulonglong),("ullAvailPhys",ctypes.c_ulonglong),("ullTotalPageFile",ctypes.c_ulonglong),("ullAvailPageFile",ctypes.c_ulonglong),("ullTotalVirtual",ctypes.c_ulonglong),("ullAvailVirtual",ctypes.c_ulonglong),("ullAvailExtendedVirtual",ctypes.c_ulonglong)]
                 s = MS(); s.dwLength = ctypes.sizeof(s); ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(s))
                 return f"{s.ullTotalPhys/1073741824:.1f} GB {t('diag_total')}, {s.ullAvailPhys/1073741824:.1f} GB {t('diag_available')} ({s.dwMemoryLoad}% {t('diag_in_use')})"
-            except Exception: pass
+            except Exception:  # noqa: BLE001 — optional hardware info, non-critical
+                return t("diag_na")
         return t("diag_na")
 
     # ------------------------------------------------------------------
@@ -1355,8 +1358,8 @@ class ValidationDialog(QDialog):
                 bbg  = T.SUCCESS_BG if exp else T.SURFACE_ALT
                 html.append(f"<div style='background:{bbg}; border:1px solid {bdr2}; color:{clr2}; border-radius:3px; padding:2px 8px; margin:2px 0; font-size:11px; font-weight:600;'>{c}</div>")
             html.append("</div>")
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 — optional section, non-critical
+            html.append("")
 
         divs = [c for c in report.checks if c.status == Status.NON_CONFORMANT]
         if divs:
@@ -1379,7 +1382,6 @@ class ValidationDialog(QDialog):
 
     def export_pdf(self):
         from datetime import datetime
-        import os
         if self.report is None:
             QMessageBox.warning(self, self._t("warn_export"), self._t("warn_export_msg"))
             return
@@ -1389,33 +1391,17 @@ class ValidationDialog(QDialog):
             return
         try:
             result_path = export_report_pdf(self.report, filepath, locale=self._locale)
-            # Try to open the generated PDF with the system default viewer.
-            # Falls back gracefully if no viewer is available.
-            import sys as _sys
-            import shutil as _shutil
-            import subprocess as _sp
-
-            _opened = False
-            if _sys.platform == "win32":
-                os.startfile(str(result_path))
-                _opened = True
-            elif _sys.platform == "darwin":
-                _opened = True
-                _sp.Popen(["open", str(result_path)])
+            # Open the generated PDF using the Qt platform-native file opener.
+            # QDesktopServices.openUrl is the recommended Qt/QGIS approach and
+            # avoids subprocess/os.startfile calls entirely.
+            _rp = Path(result_path).resolve()
+            if _rp.is_file():
+                QDesktopServices.openUrl(QUrl.fromLocalFile(str(_rp)))
             else:
-                # Linux — try common openers in order of preference
-                for _cmd in ("xdg-open", "evince", "okular", "firefox", "eog"):
-                    if _shutil.which(_cmd):
-                        _sp.Popen([_cmd, str(result_path)])
-                        _opened = True
-                        break
-
-            if not _opened:
-                # No viewer found — inform the user where the file was saved
                 QMessageBox.information(
                     self,
                     self._t("pdf_saved_title"),
-                    self._t("pdf_saved_no_viewer", path=str(result_path)),
+                    self._t("pdf_saved_no_viewer", path=str(_rp)),
                 )
         except Exception as e:
             QMessageBox.critical(self, self._t("err_pdf"), self._t("err_pdf_msg", e=e))

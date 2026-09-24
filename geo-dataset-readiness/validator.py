@@ -901,8 +901,9 @@ def validate_topological_consistency(base_path: Path, progress_callback=None, la
                     try:
                         from qgis.PyQt.QtCore import QCoreApplication
                         QCoreApplication.processEvents()
-                    except Exception:
-                        pass
+                    except Exception as _e:  # noqa: BLE001
+                        import logging as _logging
+                        _logging.getLogger(__name__).debug("processEvents skipped: %s", _e)
 
                 batch_invalid = 0
 
@@ -1161,8 +1162,9 @@ def validate_topological_consistency_detailed(base_path: Path, progress_callback
                 try:
                     from qgis.PyQt.QtCore import QCoreApplication
                     QCoreApplication.processEvents()
-                except Exception:
-                    pass
+                except Exception as _e:  # noqa: BLE001
+                    import logging as _logging
+                    _logging.getLogger(__name__).debug("processEvents skipped: %s", _e)
 
             if mask_inv.any():
                 suspect_indices = batch_valid.index[mask_inv].tolist()
@@ -1433,10 +1435,7 @@ def validate_dataset(base_path: str | Path, progress_callback=None, layer_filter
 
     if _temp_dir:
         import shutil
-        try:
-            shutil.rmtree(_temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(_temp_dir, ignore_errors=True)
 
     report.log = _log_entries
     return report
@@ -1762,8 +1761,9 @@ def _generate_report_html(report: ValidationReport, locale: str = "en_US") -> st
             else:
                 html_parts.append(f"<div style='padding: 2px 0;'><span style='color: {BORDER};'>●</span> <span style='color: {TEXT_SECONDARY};'>{lyr}</span></div>")
         html_parts.append("</div><br>")
-    except Exception:
-        pass
+    except Exception as _e:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).debug("HTML layer section skipped: %s", _e)
 
     # Non-conformant items
     non_conformant = [c for c in report.checks if c.status == Status.NON_CONFORMANT]
